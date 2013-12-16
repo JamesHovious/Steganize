@@ -16,7 +16,22 @@ import sys
 #=======================================
 
 def main(args):
-    pass
+	'''Allowed input is e for Encode or d for Decode.'''
+	command = args[1]
+	if command == 'e':
+		encode(args[2], args[3])
+	elif command == 'd':
+		decode(args[2], args[3], args[4])
+	else:
+		print 'Please type "python steganize help" for usage'
+
+
+def encode(message, file, password=None):
+	if message[-3:] == 'txt': #message is treated as a path
+		pass
+
+def decode(file, password=None):
+	pass
 
 
 
@@ -24,3 +39,14 @@ def main(args):
 
 if __name__ == "__main__":
 	main(sys.argv)
+
+
+'''
+use cases
+steganize.py e 'my message' test.jpg
+steganize.py e /message.txt test.jpg
+steganize.py e 'my message' test.jpg password
+
+steganize.py d test.jpg
+steganize.py d test.jpg password
+'''
