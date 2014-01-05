@@ -49,4 +49,8 @@ steganize.py e 'my message' test.jpg password
 
 steganize.py d test.jpg
 steganize.py d test.jpg password
+
+
+TODO encrypt with keyczar, RSA, PGP
+TODO add resume buzzword feature
 '''
