@@ -1,16 +1,29 @@
 #!/usr/bin/python
 #imports
 import sys
-
-
+#
+#   _____      _ _ _          _   ______             _   
+#  / ____|    | (_) |        (_) |  ____|           | |  
+# | |     ___ | |_| |__  _ __ _  | |__ _ __ ___  ___| |_ 
+# | |    / _ \| | | '_ \| '__| | |  __| '__/ _ \/ __| __|
+# | |___| (_) | | | |_) | |  | | | |  | | | (_) \__ \ |_ 
+#  \_____\___/|_|_|_.__/|_|  |_| |_|_ |_|  \___/|___/\__|
+#  / ____| |                       (_)                   
+# | (___ | |_ ___  __ _  __ _ _ __  _ _______            
+#  \___ \| __/ _ \/ _` |/ _` | '_ \| |_  / _ \           
+#  ____) | ||  __/ (_| | (_| | | | | |/ /  __/           
+# |_____/ \__\___|\__, |\__,_|_| |_|_/___\___|           
+#                  __/ |                                 
+#                 |___/                                  
+#                 
 #   by James Hovious
-#   https://github.com/hoviousj/Kali-Linux-Toolkit-Extensions
+#   https://github.com/hoviousj/Steganize
 #
 # version: 0.1
 # release date: TODO add date
 # changelogs:
 #   * 0.1 - TODO date - Initial release
-
+#
 #=======================================
 #DEFINE THE FUNCTIONS OF THIS SCRIPT
 #=======================================
@@ -32,10 +45,6 @@ def encode(message, file, password=None):
 
 def decode(file, password=None):
 	pass
-
-
-
-
 
 if __name__ == "__main__":
 	main(sys.argv)
