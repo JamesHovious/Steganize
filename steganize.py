@@ -93,50 +93,35 @@ def encode(msg, m_file, password=None):
         secret = msg
     with open(m_file, "rb") as dest_file:
         destination = dest_file.read()
-    secret = encode_hex(secret)
-    destination = encode_hex(destination)
+    msg_chars = len(secret)
+    secret = secret.encode('hex')
+    destination = destination.encode('hex')
     free_space = size_of_free_space(destination)
-    if free_space < len(secret.replace(':', '')):
+    if free_space < msg_chars:
         print 'Your message is too big for the amount of free space in the given file. Please shorten the message ' \
               'or select a file with more free space. '
         print 'There is space for ', free_space, ' characters.'
         exit()
     else:
-
-        if len(secret) <= free_space:
-            text_to_replace = '20:' * len(secret)
-        else:
-            text_to_replace = '20:' * free_space
+        text_to_replace = '20' * msg_chars
         destination = destination.replace(text_to_replace, secret, 1)
-        destination = destination.replace(':', '')
+        #destination = destination.replace(':', '')
         try:
             destination = bytearray.fromhex(destination)
-        except ValueError, e:
-            if 'non-hexadecimal number found in fromhex() arg at position' in e:
-                destination = destination[:-1]
-                destination = bytearray.fromhex(destination)
+        except ValueError:
+            print e
+            destination = destination[:-1]
+            destination = destination + '0a'
+            destination = bytearray.fromhex(destination)
         f = open('steganized_' + m_file, 'w')
         f.write(destination)
         f.close()
     print m_file + ' successfully steganized!'
 
 
-def encode_binary(m_input):
-    return ''.join(bin(ord(c))[2:].zfill(8) for c in m_input)
-
-
-def encode_hex(m_input):
-    return ":".join("{0:x}".format(ord(c)) for c in m_input)
-
-
-def decode_hex(m_input):
-    m_input = m_input.replace(':', '')
-    return '{0:b}'.format(int(m_input, 16))
-
-
 def size_of_free_space(m_input):
     m_max = m_input.count('20')
-    m_max_free = '20:' * m_max
+    m_max_free = '20' * m_max
     while True:
         if m_max_free in m_input:
             break
