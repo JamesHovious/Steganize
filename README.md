@@ -5,6 +5,8 @@ A python program to insert hidden messages with steganography.
 
 Welcome to Steganize. This program will encode and decode secret messages into jpg files.
 
+Steganize is currently tested for Python v 2.7
+
 Please see the below examples for proper usage syntax.
 
 **Encode**
