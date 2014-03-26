@@ -23,4 +23,4 @@ steganize.py d inconspicuous.jpg p@ssw0rd!
 **Changelog:**
 
 * v 0.5 03 25 2014
-..* Initial release. Encoding function is built and working. Decoding is not yet built.
+⋅⋅* Initial release. Encoding function is built and working. Decoding is not yet built.
