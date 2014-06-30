@@ -86,20 +86,31 @@ def encode(msg, m_file, password=None):
 
     """
     #	TODO use OS.stat() to test for proper RW permission
+    
+    
+    #Deciding if the user gave us a string or a text file to steganize
     if msg[-3:] == 'txt':
         with open(msg, "r") as secret_file:
             secret = secret_file.read().replace('\n', '')
     else:
         secret = msg
+        
+        
+    #Convert the destination file into hex so that we can measure its size
     with open(m_file, "rb") as dest_file:
         destination = dest_file.read()
     msg_chars = len(secret)
     secret = secret.encode('hex')
     destination = destination.encode('hex')
+    
+    
+    #Free space in the destination is currently defined as 20  or blank spaces
+    #We decide if there is enough plank space to just plug in the secret message
     free_space = size_of_free_space(destination)
     if free_space < msg_chars:
-        print 'Your message is too big for the amount of free space in the given file. Please shorten the message ' \
-              'or select a file with more free space. '
+        print 'Your message is too big for the amount of free space in the' \
+                ' given file. Please shorten the message ' \
+                'or select a file with more free space. '
         print 'There is space for ', free_space, ' characters.'
         exit()
     else:
@@ -108,7 +119,7 @@ def encode(msg, m_file, password=None):
         #destination = destination.replace(':', '')
         try:
             destination = bytearray.fromhex(destination)
-        except ValueError:
+        except ValueError, e:
             print e
             destination = destination[:-1]
             destination = destination + '0a'
