@@ -22,7 +22,7 @@ import sys
 # release date: 07 04 2014
 # changelogs:
 #   * 0.5 - 03 25 2014 - initial release
-#   * 0.9 - 07 04 2014 - encode/decode works, password functionality w/o error checking
+#   * 0.8 - 07 04 2014 - encode/decode works, password functionality w/o error checking
 #
 #=======================================
 #DEFINE THE FUNCTIONS OF THIS SCRIPT

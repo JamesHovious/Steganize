@@ -26,4 +26,4 @@ steganize.py d inconspicuous.jpg p@ssw0rd!
 
 * v 0.5 03 25 2014 
   * Initial release. Encoding function is built and working. Decoding is not yet built.
-  * 0.9 - 07 04 2014 - encode/decode works, password functionality w/o error checking
+  * 0.8 - 07 04 2014 - encode/decode works, password functionality w/o error checking
