@@ -48,7 +48,7 @@ def main(args):
     if command == 'e':
         encode(args[2], args[3])
     elif command == 'd':
-        decode(args[2], args[3])
+        decode(args[2])
     elif command == 'help':
         print '''
         Welcome to Steganize. This program will encode and decode secret messages into jpg files.
@@ -95,13 +95,13 @@ def encode(msg, m_file, password=None):
     else:
         secret = msg
         
-        
-    #Convert the destination file into hex so that we can measure its size
+    #Convert the destination file into hex so that we can measure its free space
     with open(m_file, "rb") as dest_file:
         destination = dest_file.read()
     msg_chars = len(secret)
     secret = secret.encode('hex')
     destination = destination.encode('hex')
+    #At this point 'secret'(str) and 'destination'(file) are now hex values(str)
     
     
     #Free space in the destination is currently defined as 20  or blank spaces
@@ -115,6 +115,7 @@ def encode(msg, m_file, password=None):
         exit()
     else:
         text_to_replace = '20' * msg_chars
+        secret = add_sig(secret)
         destination = destination.replace(text_to_replace, secret, 1)
         #destination = destination.replace(':', '')
         try:
@@ -137,8 +138,16 @@ def size_of_free_space(m_input):
         if m_max_free in m_input:
             break
         m_max_free = m_max_free[:-2].strip()
-    return m_max_free.count('20')
+    return m_max_free.count('20') - 4 #subtracting a total of 2 hex values to make room for the signature
 
+
+def add_sig(secret):
+    """
+    This function will add a signature "jh[SECRET]hj" to the secret message. This will be used in decoding.
+    :param secret: A string of the secret to be encoded
+    :return:
+    """
+    return '6a' + '68' + secret + '68' + '6a'
 
 def decode(m_file, password=None):
     """This function finds and decodes secret messages in a given file
@@ -150,7 +159,38 @@ def decode(m_file, password=None):
     password (str): For decoding commands the password to decrypt the message
 
     """
-    pass
+    #Convert the steganized file into hex so that we can look for the secret
+    with open(m_file, "rb") as secret_file:
+        destination = secret_file.read()
+    secret_blob = destination.encode('hex')
+    #At this point 'secret' is now a string of hex values
+    if sig_detected(secret_blob):
+        secret = simple_carve(secret_blob)
+        secret = secret.decode('hex')
+        print secret
+
+
+def sig_detected(hex):
+    header = '6a68'
+    footer = '686a'
+    if header in hex:
+        if footer in hex:
+            return True
+    else:
+        return False
+
+def simple_carve(secret_blob):
+    header = '6a68'
+    footer = '686a'
+    try:
+        start = secret_blob.index( header ) + len( header )
+        end = secret_blob.index( footer, start )
+        return secret_blob[start:end]
+    except ValueError, e:
+        print e
+        exit()
+
+
 
 if __name__ == "__main__":
     main(sys.argv)
