@@ -18,10 +18,11 @@ import sys
 #   by James Hovious
 #   https://github.com/hoviousj/Steganize
 #
-# version: 0.1
-# release date: 03 25 2014
+# version: 0.8
+# release date: 07 04 2014
 # changelogs:
 #   * 0.5 - 03 25 2014 - initial release
+#   * 0.9 - 07 04 2014 - encode/decode works, password functionality w/o error checking
 #
 #=======================================
 #DEFINE THE FUNCTIONS OF THIS SCRIPT
@@ -46,9 +47,15 @@ def main(args):
 
     command = args[1]
     if command == 'e':
-        encode(args[2], args[3])
+        if len(args) == 4:
+            encode(args[2], args[3])
+        else:
+            encode(args[2], args[3], args[4])
     elif command == 'd':
-        decode(args[2])
+        if len(args == 3):
+            decode(args[2])
+        else:
+            decode(args[2], args[3])
     elif command == 'help':
         print '''
         Welcome to Steganize. This program will encode and decode secret messages into jpg files.
@@ -65,14 +72,13 @@ def main(args):
 
         '''
     else:
-        print 'Please type "python steganize help" for usage'
+        print 'Please type "python steganize.py help" for usage'
 
 
 def encode(msg, m_file, password=None):
     """This functions encodes the given secret into a destination file.
 
     Args:
-
         msg (str): For encoding commands the message or text file to encode
                    For decoding commands the file to decode
 
@@ -80,7 +86,6 @@ def encode(msg, m_file, password=None):
                    For decoding commands the password to decrypt the message
 
     Kwargs:
-
         password (str): For encoding commands the password to encrypt the message
 
 
@@ -89,7 +94,7 @@ def encode(msg, m_file, password=None):
     
     
     #Deciding if the user gave us a string or a text file to steganize
-    if msg[-3:] == 'txt':
+    if msg[-4:] == '.txt':
         with open(msg, "r") as secret_file:
             secret = secret_file.read().replace('\n', '')
     else:
@@ -98,6 +103,13 @@ def encode(msg, m_file, password=None):
     #Convert the destination file into hex so that we can measure its free space
     with open(m_file, "rb") as dest_file:
         destination = dest_file.read()
+
+
+    #ecnrypt if using a password
+    if password is not None:
+        from simplecrypt import encrypt
+        secret = encrypt(password, secret)
+
     msg_chars = len(secret)
     secret = secret.encode('hex')
     destination = destination.encode('hex')
@@ -132,6 +144,11 @@ def encode(msg, m_file, password=None):
 
 
 def size_of_free_space(m_input):
+    """
+    Determine the amount of free space in a given file in relation to the size of the secret
+    :param m_input: the hex string value of the file in which we hide the secret
+    :return: an integer of the amount of free space in the given file
+    """
     m_max = m_input.count('20')
     m_max_free = '20' * m_max
     while True:
@@ -145,7 +162,7 @@ def add_sig(secret):
     """
     This function will add a signature "jh[SECRET]hj" to the secret message. This will be used in decoding.
     :param secret: A string of the secret to be encoded
-    :return:
+    :return: The original secret with a header and footer on concatenated to the beginning and end
     """
     return '6a' + '68' + secret + '68' + '6a'
 
@@ -153,24 +170,34 @@ def decode(m_file, password=None):
     """This function finds and decodes secret messages in a given file
 
     Args:
+        m_file (str): For decoding commands the file to decode
 
-    m_file (str): For decoding commands the file to decode
-
-    password (str): For decoding commands the password to decrypt the message
+    Kwargs:
+        password (str): For decoding commands the password to decrypt the message
 
     """
     #Convert the steganized file into hex so that we can look for the secret
     with open(m_file, "rb") as secret_file:
         destination = secret_file.read()
     secret_blob = destination.encode('hex')
-    #At this point 'secret' is now a string of hex values
+    #At this point 'secret_blob' is now a string of hex values
     if sig_detected(secret_blob):
         secret = simple_carve(secret_blob)
         secret = secret.decode('hex')
+        if password is not None:
+            from simplecrypt import decrypt
+            secret = decrypt(password, secret)
         print secret
+    else:
+        print 'No secret detected in file ' + str(m_file) #TODO use least significant pixel algorithm
 
 
 def sig_detected(hex):
+    """
+    Detect a signiture "jh...hj" in a given hex string
+    :param hex: a string of hex characters of the file being analysed
+    :return: boolean value if the signature is detected
+    """
     header = '6a68'
     footer = '686a'
     if header in hex:
@@ -180,6 +207,11 @@ def sig_detected(hex):
         return False
 
 def simple_carve(secret_blob):
+    """
+    Carve a secret message that is in between a header and footer
+    :param secret_blob: a hex string of the file being analysed
+    :return: the string found in between the header and footer
+    """
     header = '6a68'
     footer = '686a'
     try:
