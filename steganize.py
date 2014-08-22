@@ -21,8 +21,22 @@ from argparse import RawTextHelpFormatter, SUPPRESS
 #   by James Hovious
 #   https://github.com/hoviousj/Steganize
 #
-# version: 0.8
+# version: 1.0
 #
+#=======================================
+#DEFINE THE GLOBAL VARIABLES OF THIS SCRIPT
+#=======================================
+#These are signatures that will be used to detect hidden messages
+
+header = '6a68' # equivalent of 'jh' in hex
+footer = '686a' # equivalent of 'hj' in hex
+
+space = '20' # equivalent of a space in hex
+
+
+
+
+
 #=======================================
 #DEFINE THE FUNCTIONS OF THIS SCRIPT
 #=======================================
@@ -32,15 +46,30 @@ def main(args):
     args = get_args()
 
     if args.e:
-        print "embedding '%s' into %s...." % (args.message, args.filename)
+        if args.password:
+            import_simplecrypt()
+            print "embedding '%s' into %s with password %s...." % (args.message, args.filename, args.password)
+            encode(args.message, args.filename, args.password)
+        else:
+            print "embedding '%s' into %s...." % (args.message, args.filename)
+            encode(args.message, args.filename)
+
     elif args.d:
         if args.password:
+            import_simplecrypt()
             print "extracting message from %s with password: %s...." % (args.filename, args.password)
+            decode(args.filename, args.password)
         else:
             print "extracting message from %s...." % args.filename
+            decode(args.filename)
 
 
-
+def import_simplecrypt():
+    try:
+        import simplecrypt
+    except Exception:
+        print 'You must install simplecrypt. Run the command \npip install -r requirements.txt'
+        sys.exit()
 
 def get_args():
     """
@@ -71,13 +100,12 @@ def get_args():
     command_group.add_argument('-e', action='store_true', help='Encode a secret message',)
     command_group.add_argument('-d', action='store_true', help='Decode a secret message',)
     parser.add_argument('--filename', help='Name of the file from which encoding/decoding takes place', required=True)
-    parser.add_argument('--message', help='Secret message to encode', required=True)
+    parser.add_argument('--message', help='Secret message to encode', required=False)
     parser.add_argument('--password',  help='Encrypt/decrypt message with PASSWORD', required=False)
 
     return parser.parse_args()
 
-
-def encode(msg, m_file, password=None):
+def encode(msg, m_file, passwd=None):
     """This functions encodes the given secret into a destination file.
 
     Args:
@@ -85,42 +113,59 @@ def encode(msg, m_file, password=None):
                    For decoding commands the file to decode
 
         m_file (str): For encoding commands the file in which the message will be encoded
-                      For decoding commands the password to decrypt the message
+                   For decoding commands the password to decrypt the message
 
     Kwargs:
         password (str): For encoding commands the password to encrypt the message
 
-
     """
-    #	TODO use OS.stat() to test for proper RW permission
-    
-    
-    #Deciding if the user gave us a string or a text file to steganize
-    if msg[-4:] == '.txt':
-        with open(msg, "r") as secret_file:
-            secret = secret_file.read().replace('\n', '')
-    else:
-        secret = msg
-        
+    secret = get_secret_msg(msg)
+
     #Convert the destination file into hex so that we can measure its free space
     with open(m_file, "rb") as dest_file:
         destination = dest_file.read()
 
-
-    #ecnrypt if using a password
-    if password is not None:
+    if passwd is not None:
         from simplecrypt import encrypt
-        secret = encrypt(password, secret)
+        secret = encrypt(passwd, secret)
 
     msg_chars = len(secret)
     secret = secret.encode('hex')
     destination = destination.encode('hex')
     #At this point 'secret'(str) and 'destination'(file) are now hex values(str)
-    
-    
-    #Free space in the destination is currently defined as 20  or blank spaces
-    #We decide if there is enough plank space to just plug in the secret message
+
+    #Free space in the destination is currently defined as spaces
+    #We decide if there is enough blank space to just plug in the secret message
     free_space = size_of_free_space(destination)
+    write_steganized_output_file(free_space, msg_chars, m_file, secret, destination)
+
+def get_secret_msg(msg):
+    """
+    Decide if the user gave us a string or a text file to steganize
+
+     Args:
+        msg (str | file): the string or text file containing the secret message
+
+    """
+    if msg[-4:] == '.txt':
+        with open(msg, "r") as secret_file:
+            secret = secret_file.read().replace('\n', '')
+    else:
+        secret = msg
+    return secret
+
+def write_steganized_output_file(free_space, msg_chars, m_file, secret, destination):
+    """
+    This function takes the secret and writes it into the originally given file
+
+    Args:
+        :param free_space(int): The amount of free space in the given file
+        :param msg_chars(int):  The number of characters of the secret message
+        :param m_file(str):  The name of the original file in which we place our staganized message
+        :param secret(str): The secret message that we are encoding/encrypting
+        :param destination(file): The file to which we will write out seganized message
+        :return:
+    """
     if free_space < msg_chars:
         print 'Your message is too big for the amount of free space in the' \
                 ' given file. Please shorten the message ' \
@@ -128,16 +173,15 @@ def encode(msg, m_file, password=None):
         print 'There is space for ', free_space, ' characters.'
         exit()
     else:
-        text_to_replace = '20' * msg_chars
+        text_to_replace = space * msg_chars
         secret = add_sig(secret)
         destination = destination.replace(text_to_replace, secret, 1)
-        #destination = destination.replace(':', '')
         try:
             destination = bytearray.fromhex(destination)
         except ValueError, e:
             print e
             destination = destination[:-1]
-            destination = destination + '0a'
+            destination = destination + '0a' # new line in hex
             destination = bytearray.fromhex(destination)
         f = open('steganized_' + m_file, 'w')
         f.write(destination)
@@ -151,13 +195,13 @@ def size_of_free_space(m_input):
     :param m_input: the hex string value of the file in which we hide the secret
     :return: an integer of the amount of free space in the given file
     """
-    m_max = m_input.count('20')
-    m_max_free = '20' * m_max
+    m_max = m_input.count(space)
+    m_max_free = space * m_max
     while True:
         if m_max_free in m_input:
             break
         m_max_free = m_max_free[:-2].strip()
-    return m_max_free.count('20') - 4 #subtracting a total of 2 hex values to make room for the signature
+    return m_max_free.count(space) - 4 #subtracting a total of 2 hex values to make room for the signature
 
 
 def add_sig(secret):
@@ -166,7 +210,7 @@ def add_sig(secret):
     :param secret: A string of the secret to be encoded
     :return: The original secret with a header and footer on concatenated to the beginning and end
     """
-    return '6a' + '68' + secret + '68' + '6a'
+    return header + secret + footer
 
 def decode(m_file, password=None):
     """This function finds and decodes secret messages in a given file
@@ -200,8 +244,6 @@ def sig_detected(hex):
     :param hex: a string of hex characters of the file being analysed
     :return: boolean value if the signature is detected
     """
-    header = '6a68'
-    footer = '686a'
     if header in hex:
         if footer in hex:
             return True
@@ -214,8 +256,6 @@ def simple_carve(secret_blob):
     :param secret_blob: a hex string of the file being analysed
     :return: the string found in between the header and footer
     """
-    header = '6a68'
-    footer = '686a'
     try:
         start = secret_blob.index( header ) + len( header )
         end = secret_blob.index( footer, start )
