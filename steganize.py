@@ -1,5 +1,8 @@
 #!/usr/bin/python
 import sys
+import argparse
+from argparse import RawTextHelpFormatter, SUPPRESS
+
 #
 #   _____      _ _ _          _   ______             _   
 #  / ____|    | (_) |        (_) |  ____|           | |  
@@ -19,10 +22,6 @@ import sys
 #   https://github.com/hoviousj/Steganize
 #
 # version: 0.8
-# release date: 07 04 2014
-# changelogs:
-#   * 0.5 - 03 25 2014 - initial release
-#   * 0.8 - 07 04 2014 - encode/decode works, password functionality w/o error checking
 #
 #=======================================
 #DEFINE THE FUNCTIONS OF THIS SCRIPT
@@ -30,49 +29,52 @@ import sys
 
 
 def main(args):
-    """This is the main function for the program.
+    args = get_args()
 
-    Args:
-    args[1] (str): The command to encode or decode
+    if args.e:
+        print "embedding '%s' into %s...." % (args.message, args.filename)
+    elif args.d:
+        if args.password:
+            print "extracting message from %s with password: %s...." % (args.filename, args.password)
+        else:
+            print "extracting message from %s...." % args.filename
 
-    args[2] (str): For encoding commands the message or text file to encode
-                   For decoding commands the file to decode
 
-    args[3] (str): For encoding commands the file in which the message will be encoded
-                   For decoding commands the password to decrypt the message
 
-    args[4] (str): For encoding commands the password to encrypt the message
+
+def get_args():
+    """
+    Set up the arguments for the command line tool
+
+    Either -e or -d is required.
+    For both -e and -d --message and --filename are required
+    For -d --password is optional.
 
     """
+    parser = argparse.ArgumentParser(description='''
+    Welcome to Steganize. This program will encode and decode secret messages into jpg files.
 
-    command = args[1]
-    if command == 'e':
-        if len(args) == 4:
-            encode(args[2], args[3])
-        else:
-            encode(args[2], args[3], args[4])
-    elif command == 'd':
-        if len(args == 3):
-            decode(args[2])
-        else:
-            decode(args[2], args[3])
-    elif command == 'help':
-        print '''
-        Welcome to Steganize. This program will encode and decode secret messages into jpg files.
-        Please see the below examples for proper usage syntax.
+    **Encode**
 
-        [Encode]
-        steganize.py e 'top secret' inconspicuous.jpg
-        steganize.py e /top_secret.txt inconspicuous.jpg
-        steganize.py e 'top_secret.txt' inconspicuous.jpg p@ssw0rd!
+    steganize.py -e --message 'top secret' inconspicuous.jpg
+    steganize.py e /top_secret.txt inconspicuous.jpg
+    steganize.py e 'top_secret.txt' inconspicuous.jpg p@ssw0rd!
 
-        [Decode]
-        steganize.py d inconspicuous.jpg
-        steganize.py d inconspicuous.jpg p@ssw0rd!
 
-        '''
-    else:
-        print 'Please type "python steganize.py help" for usage'
+    **Decode**
+
+    steganize.py d inconspicuous.jpg
+    steganize.py d inconspicuous.jpg p@ssw0rd!
+    ''',formatter_class=RawTextHelpFormatter,usage=SUPPRESS)
+
+    command_group = parser.add_mutually_exclusive_group(required=True)
+    command_group.add_argument('-e', action='store_true', help='Encode a secret message',)
+    command_group.add_argument('-d', action='store_true', help='Decode a secret message',)
+    parser.add_argument('--filename', help='Name of the file from which encoding/decoding takes place', required=True)
+    parser.add_argument('--message', help='Secret message to encode', required=True)
+    parser.add_argument('--password',  help='Encrypt/decrypt message with PASSWORD', required=False)
+
+    return parser.parse_args()
 
 
 def encode(msg, m_file, password=None):
@@ -83,7 +85,7 @@ def encode(msg, m_file, password=None):
                    For decoding commands the file to decode
 
         m_file (str): For encoding commands the file in which the message will be encoded
-                   For decoding commands the password to decrypt the message
+                      For decoding commands the password to decrypt the message
 
     Kwargs:
         password (str): For encoding commands the password to encrypt the message
