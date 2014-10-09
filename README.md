@@ -11,18 +11,21 @@ Steganize is currently tested for Python v 2.7
 
 Please see the below examples for proper usage syntax.
 
+
+    Welcome to Steganize. This program will encode and decode secret messages into jpg files.
+
 **Encode**
 ```
-steganize.py e 'top secret' inconspicuous.jpg
-steganize.py e /top_secret.txt inconspicuous.jpg
-steganize.py e 'top_secret.txt' inconspicuous.jpg p@ssw0rd!
+steganize.py -e --message 'top secret' --filename inconspicuous.jpg
+steganize.py -e --message /top_secret.txt --filename inconspicuous.jpg
+steganize.py -e --message 'top_secret.txt' --filename inconspicuous.jpg p@ssw0rd!
 ```
-
 **Decode**
 ```
-steganize.py d inconspicuous.jpg
-steganize.py d inconspicuous.jpg p@ssw0rd!
-```
+steganize.py -d --filename inconspicuous.jpg
+steganize.py -d --filename inconspicuous.jpg --password p@ssw0rd!
+```  
+
 
 **Changelog:**
 
@@ -31,3 +34,5 @@ steganize.py d inconspicuous.jpg p@ssw0rd!
   * 0.8 - 07 04 2014 - encode/decode works, password functionality w/o error checking
 * v 1.0 08 22 2014
   * Program works as intended. No known bugs.
+* v 1.0.1 10 08 2014
+  * Fixed bug that inserted too many characters into free space 

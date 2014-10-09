@@ -21,20 +21,17 @@ from argparse import RawTextHelpFormatter, SUPPRESS
 #   by James Hovious
 #   https://github.com/hoviousj/Steganize
 #
-# version: 1.0
+# version: 1.0.1
 #
 #=======================================
 #DEFINE THE GLOBAL VARIABLES OF THIS SCRIPT
 #=======================================
 #These are signatures that will be used to detect hidden messages
 
-header = '6a68' # equivalent of 'jh' in hex
-footer = '686a' # equivalent of 'hj' in hex
 
-space = '20' # equivalent of a space in hex
-
-
-
+header = '6a68'  # equivalent of 'jh' in hex
+footer = '686a'  # equivalent of 'hj' in hex
+space = '20'  # equivalent of a space in hex
 
 
 #=======================================
@@ -42,7 +39,7 @@ space = '20' # equivalent of a space in hex
 #=======================================
 
 
-def main(args):
+def main():
     args = get_args()
 
     if args.e:
@@ -71,6 +68,7 @@ def import_simplecrypt():
         print 'You must install simplecrypt. Run the command \npip install -r requirements.txt'
         sys.exit()
 
+
 def get_args():
     """
     Set up the arguments for the command line tool
@@ -85,16 +83,16 @@ def get_args():
 
     **Encode**
 
-    steganize.py -e --message 'top secret' inconspicuous.jpg
-    steganize.py e /top_secret.txt inconspicuous.jpg
-    steganize.py e 'top_secret.txt' inconspicuous.jpg p@ssw0rd!
+    steganize.py -e --message 'top secret' --filename inconspicuous.jpg
+    steganize.py -e --message /top_secret.txt --filename inconspicuous.jpg
+    steganize.py -e --message 'top_secret.txt' --filename inconspicuous.jpg p@ssw0rd!
 
 
     **Decode**
 
-    steganize.py d inconspicuous.jpg
-    steganize.py d inconspicuous.jpg p@ssw0rd!
-    ''',formatter_class=RawTextHelpFormatter,usage=SUPPRESS)
+    steganize.py -d --filename inconspicuous.jpg
+    steganize.py -d --filename inconspicuous.jpg --password p@ssw0rd!
+    ''', formatter_class=RawTextHelpFormatter, usage=SUPPRESS)
 
     command_group = parser.add_mutually_exclusive_group(required=True)
     command_group.add_argument('-e', action='store_true', help='Encode a secret message',)
@@ -104,6 +102,7 @@ def get_args():
     parser.add_argument('--password',  help='Encrypt/decrypt message with PASSWORD', required=False)
 
     return parser.parse_args()
+
 
 def encode(msg, m_file, passwd=None):
     """This functions encodes the given secret into a destination file.
@@ -139,6 +138,7 @@ def encode(msg, m_file, passwd=None):
     free_space = size_of_free_space(destination)
     write_steganized_output_file(free_space, msg_chars, m_file, secret, destination)
 
+
 def get_secret_msg(msg):
     """
     Decide if the user gave us a string or a text file to steganize
@@ -154,6 +154,7 @@ def get_secret_msg(msg):
         secret = msg
     return secret
 
+
 def write_steganized_output_file(free_space, msg_chars, m_file, secret, destination):
     """
     This function takes the secret and writes it into the originally given file
@@ -168,12 +169,12 @@ def write_steganized_output_file(free_space, msg_chars, m_file, secret, destinat
     """
     if free_space < msg_chars:
         print 'Your message is too big for the amount of free space in the' \
-                ' given file. Please shorten the message ' \
-                'or select a file with more free space. '
+              ' given file. Please shorten the message ' \
+              'or select a file with more free space. '
         print 'There is space for ', free_space, ' characters.'
         exit()
     else:
-        text_to_replace = space * msg_chars
+        text_to_replace = space * msg_chars + space * 4  # Add 4 spaces for our header/footer
         secret = add_sig(secret)
         destination = destination.replace(text_to_replace, secret, 1)
         try:
@@ -181,7 +182,7 @@ def write_steganized_output_file(free_space, msg_chars, m_file, secret, destinat
         except ValueError, e:
             print e
             destination = destination[:-1]
-            destination = destination + '0a' # new line in hex
+            destination += '0a'  # new line in hex
             destination = bytearray.fromhex(destination)
         f = open('steganized_' + m_file, 'w')
         f.write(destination)
@@ -201,7 +202,7 @@ def size_of_free_space(m_input):
         if m_max_free in m_input:
             break
         m_max_free = m_max_free[:-2].strip()
-    return m_max_free.count(space) - 4 #subtracting a total of 2 hex values to make room for the signature
+    return m_max_free.count(space) - 4  # subtracting a total of 2 hex values to make room for the signature
 
 
 def add_sig(secret):
@@ -211,6 +212,7 @@ def add_sig(secret):
     :return: The original secret with a header and footer on concatenated to the beginning and end
     """
     return header + secret + footer
+
 
 def decode(m_file, password=None):
     """This function finds and decodes secret messages in a given file
@@ -235,20 +237,21 @@ def decode(m_file, password=None):
             secret = decrypt(password, secret)
         print secret
     else:
-        print 'No secret detected in file ' + str(m_file) #TODO use least significant pixel algorithm
+        print 'No secret detected in file ' + str(m_file)  # TODO use least significant pixel algorithm
 
 
 def sig_detected(hex):
     """
-    Detect a signiture "jh...hj" in a given hex string
+    Detect a signature "jh...hj" in a given hex string
     :param hex: a string of hex characters of the file being analysed
     :return: boolean value if the signature is detected
     """
-    if header in hex:
+    if header in hex:  # TODO use regex for this function
         if footer in hex:
             return True
     else:
         return False
+
 
 def simple_carve(secret_blob):
     """
@@ -257,14 +260,13 @@ def simple_carve(secret_blob):
     :return: the string found in between the header and footer
     """
     try:
-        start = secret_blob.index( header ) + len( header )
-        end = secret_blob.index( footer, start )
+        start = secret_blob.index(header) + len(header)
+        end = secret_blob.index(footer, start)
         return secret_blob[start:end]
     except ValueError, e:
         print e
         exit()
 
 
-
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
