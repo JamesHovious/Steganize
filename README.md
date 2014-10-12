@@ -9,9 +9,6 @@ Steganize is currently tested for Python v 2.7
 
 Please see the below examples for proper usage syntax.
 
-
-    Welcome to Steganize. This program will encode and decode secret messages into jpg files.
-
 **Encode**
 ```
 steganize.py -e --message 'top secret' --filename inconspicuous.jpg
