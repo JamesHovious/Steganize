@@ -18,8 +18,8 @@ from argparse import RawTextHelpFormatter, SUPPRESS
 #                  __/ |                                 
 #                 |___/                                  
 #                 
-#   by James Hovious
-#   https://github.com/hoviousj/Steganize
+#   by James
+#   https://github.com/morgoroth/Steganize
 #
 # version: 1.0.1
 #
